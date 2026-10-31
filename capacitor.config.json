@@ -1,0 +1,16 @@
+{
+  "appId": "br.com.frontsecurity.qap",
+  "appName": "Front Security QAP",
+  "webDir": "www",
+  "server": {
+    "url": "https://danielschiavolin.github.io/qap/app.html",
+    "allowNavigation": ["danielschiavolin.github.io"],
+    "cleartext": false,
+    "errorPath": "index.html"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

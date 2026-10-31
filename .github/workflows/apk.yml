@@ -1,0 +1,68 @@
+# Gera o APK assinado e publica em Releases (link fixo: releases/latest/download/front-security-qap.apk).
+# Precisa de 3 segredos em Settings > Secrets and variables > Actions:
+#   APP_SEGREDO  - código do app (painel do QAP > 🛡️ Segurança > Código do app)
+#   CHAVE_BASE64 - chave de assinatura do APK em base64 (pasta qap-app-chaves no computador)
+#   CHAVE_SENHA  - senha dessa chave
+name: Gerar APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Conferir segredos
+        env:
+          APP_SEGREDO: ${{ secrets.APP_SEGREDO }}
+          CHAVE_BASE64: ${{ secrets.CHAVE_BASE64 }}
+          CHAVE_SENHA: ${{ secrets.CHAVE_SENHA }}
+        run: |
+          for v in APP_SEGREDO CHAVE_BASE64 CHAVE_SENHA; do
+            if [ -z "${!v}" ]; then echo "::error::Falta o segredo $v (Settings > Secrets and variables > Actions)"; exit 1; fi
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Instalar e sincronizar
+        run: |
+          npm ci
+          npx cap sync android
+
+      - name: Gerar APK assinado
+        env:
+          APP_SEGREDO: ${{ secrets.APP_SEGREDO }}
+          CHAVE_BASE64: ${{ secrets.CHAVE_BASE64 }}
+          CHAVE_SENHA: ${{ secrets.CHAVE_SENHA }}
+          VERSAO_APP: ${{ github.run_number }}
+        run: |
+          printf '%s' "$CHAVE_BASE64" | base64 -d > "$RUNNER_TEMP/qap.jks"
+          export CHAVE_ARQUIVO="$RUNNER_TEMP/qap.jks"
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/front-security-qap.apk"
+          rm -f "$RUNNER_TEMP/qap.jks"
+
+      - name: Publicar
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: App QAP v${{ github.run_number }}
+          body: Instale o arquivo front-security-qap.apk no celular Android.
+          files: ${{ runner.temp }}/front-security-qap.apk
+          make_latest: true

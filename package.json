@@ -1,0 +1,16 @@
+{
+  "name": "front-security-qap-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App Android do QAP (Front Security): abre o site do QAP com print/gravação bloqueados e pedidos assinados.",
+  "scripts": {
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0"
+  }
+}
